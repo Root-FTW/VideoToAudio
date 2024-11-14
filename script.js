@@ -6,7 +6,7 @@ const uploader = document.getElementById('uploader');
 const convertButton = document.getElementById('convertButton');
 const progressBar = document.getElementById('progressBar');
 const downloadLink = document.getElementById('downloadLink');
-const transcriptionResult = document.getElementById('transcriptionResult'); // Nuevo elemento para mostrar la transcripción
+const transcriptionResult = document.getElementById('transcriptionResult'); // Elemento para mostrar la transcripción
 
 let userFile;
 
@@ -29,27 +29,29 @@ convertButton.addEventListener('click', async () => {
   convertButton.disabled = true;
   progressBar.style.display = 'block';
   progressBar.value = 0;
-  transcriptionResult.textContent = 'Procesando transcripción...';
-
-  // Cargar FFmpeg si aún no está cargado
-  if (!ffmpeg.isLoaded()) {
-    await ffmpeg.load();
-  }
-
-  // Leer el archivo de video
-  ffmpeg.FS('writeFile', userFile.name, await fetchFile(userFile));
-
-  // Configurar la salida
-  const outputFileName = 'output.mp3';
-
-  // Ejecutar el comando de FFmpeg para extraer el audio
-  ffmpeg.setProgress(({ ratio }) => {
-    progressBar.value = ratio * 100;
-  });
+  transcriptionResult.textContent = ''; // Limpiar mensajes anteriores
 
   try {
+    // Cargar FFmpeg si aún no está cargado
+    if (!ffmpeg.isLoaded()) {
+      await ffmpeg.load();
+    }
+
+    // Leer el archivo de video
+    ffmpeg.FS('writeFile', userFile.name, await fetchFile(userFile));
+
+    // Configurar la salida
+    const outputFileName = 'output.mp3';
+
+    // Ejecutar el comando de FFmpeg para extraer el audio
+    ffmpeg.setProgress(({ ratio }) => {
+      progressBar.value = ratio * 100;
+    });
+
+    transcriptionResult.textContent = 'Extrayendo audio...'; // Actualizar el mensaje
+
     await ffmpeg.run('-i', userFile.name, '-q:a', '0', '-map', 'a', outputFileName);
-    
+
     // Leer el archivo de salida
     const data = ffmpeg.FS('readFile', outputFileName);
 
@@ -59,6 +61,13 @@ convertButton.addEventListener('click', async () => {
     downloadLink.href = url;
     downloadLink.style.display = 'inline';
     downloadLink.textContent = 'Descargar MP3';
+
+    // Limpiar los archivos en FFmpeg
+    ffmpeg.FS('unlink', userFile.name);
+    ffmpeg.FS('unlink', outputFileName);
+
+    // Actualizar el mensaje de transcripción
+    transcriptionResult.textContent = 'Procesando transcripción...';
 
     // Preparar el archivo para enviar al backend
     const formData = new FormData();
@@ -91,9 +100,5 @@ convertButton.addEventListener('click', async () => {
   } finally {
     progressBar.style.display = 'none';
     convertButton.disabled = false;
-
-    // Limpiar el sistema de archivos de FFmpeg
-    ffmpeg.FS('unlink', userFile.name);
-    ffmpeg.FS('unlink', outputFileName);
   }
 });
