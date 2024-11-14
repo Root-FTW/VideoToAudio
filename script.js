@@ -1,9 +1,12 @@
+// script.js
+
 const { createFFmpeg, fetchFile } = FFmpeg;
 const ffmpeg = createFFmpeg({ log: true });
 const uploader = document.getElementById('uploader');
 const convertButton = document.getElementById('convertButton');
 const progressBar = document.getElementById('progressBar');
 const downloadLink = document.getElementById('downloadLink');
+const transcriptionResult = document.getElementById('transcriptionResult'); // Elemento para mostrar la transcripción
 
 let userFile;
 
@@ -13,6 +16,7 @@ uploader.addEventListener('change', (e) => {
   if (userFile) {
     convertButton.disabled = false;
     downloadLink.style.display = 'none';
+    transcriptionResult.textContent = ''; // Limpiar transcripción anterior
   } else {
     convertButton.disabled = true;
   }
@@ -25,6 +29,7 @@ convertButton.addEventListener('click', async () => {
   convertButton.disabled = true;
   progressBar.style.display = 'block';
   progressBar.value = 0;
+  transcriptionResult.textContent = 'Procesando transcripción...';
 
   // Cargar FFmpeg si aún no está cargado
   if (!ffmpeg.isLoaded()) {
@@ -55,14 +60,36 @@ convertButton.addEventListener('click', async () => {
     downloadLink.style.display = 'inline';
     downloadLink.textContent = 'Descargar MP3';
 
-    // Limpiar el sistema de archivos de FFmpeg
-    ffmpeg.FS('unlink', userFile.name);
-    ffmpeg.FS('unlink', outputFileName);
+    // Ambiente para enviar el audio al backend para transcripción
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'audio.mp3');
+
+    // Enviar la solicitud de transcripción
+    const response = await fetch('/api/transcribe', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Error en la transcripción');
+    }
+
+    const result = await response.json();
+    const transcription = result.transcription.text; // Ajusta según la respuesta de Groq
+
+    // Mostrar la transcripción al usuario
+    transcriptionResult.textContent = transcription;
   } catch (error) {
-    console.error('Error durante la conversión:', error);
-    alert('Ocurrió un error durante la conversión. Por favor, intenta de nuevo.');
+    console.error('Error:', error);
+    alert(`Ocurrió un error: ${error.message}`);
+    transcriptionResult.textContent = 'Error en la transcripción.';
   } finally {
     progressBar.style.display = 'none';
     convertButton.disabled = false;
+
+    // Limpiar el sistema de archivos de FFmpeg
+    ffmpeg.FS('unlink', userFile.name);
+    ffmpeg.FS('unlink', outputFileName);
   }
 });
