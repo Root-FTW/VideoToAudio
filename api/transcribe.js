@@ -54,8 +54,7 @@ export default async function handler(req, res) {
             contentType: audioFile.type,
           });
           formData.append('model', 'whisper-large-v3');
-          // Puedes omitir 'response_format' si prefieres el formato por defecto
-          // formData.append('response_format', 'verbose_json');
+          formData.append('response_format', 'verbose_json'); // Puedes omitir esto si prefieres el formato por defecto
           return formData;
         })(),
       });
@@ -63,7 +62,7 @@ export default async function handler(req, res) {
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Error en la API de Groq:', errorText);
-        return res.status(500).json({ error: 'Error en la transcripción' });
+        return res.status(500).json({ error: 'Error en la transcripción: ' + errorText });
       }
 
       const transcription = await response.json();
