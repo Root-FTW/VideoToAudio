@@ -6,7 +6,7 @@ const uploader = document.getElementById('uploader');
 const convertButton = document.getElementById('convertButton');
 const progressBar = document.getElementById('progressBar');
 const downloadLink = document.getElementById('downloadLink');
-const transcriptionResult = document.getElementById('transcriptionResult'); // Elemento para mostrar la transcripción
+const transcriptionResult = document.getElementById('transcriptionResult'); // Nuevo elemento para mostrar la transcripción
 
 let userFile;
 
@@ -60,7 +60,7 @@ convertButton.addEventListener('click', async () => {
     downloadLink.style.display = 'inline';
     downloadLink.textContent = 'Descargar MP3';
 
-    // Ambiente para enviar el audio al backend para transcripción
+    // Preparar el archivo para enviar al backend
     const formData = new FormData();
     formData.append('audio', audioBlob, 'audio.mp3');
 
@@ -76,10 +76,14 @@ convertButton.addEventListener('click', async () => {
     }
 
     const result = await response.json();
-    const transcription = result.transcription.text; // Ajusta según la respuesta de Groq
 
-    // Mostrar la transcripción al usuario
-    transcriptionResult.textContent = transcription;
+    // Verificar la estructura de la respuesta
+    if (result.transcription && result.transcription.text) {
+      const transcription = result.transcription.text;
+      transcriptionResult.textContent = transcription;
+    } else {
+      throw new Error('Respuesta de transcripción no válida');
+    }
   } catch (error) {
     console.error('Error:', error);
     alert(`Ocurrió un error: ${error.message}`);
