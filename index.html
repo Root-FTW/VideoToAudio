@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Extracción de Audio con ffmpeg.wasm</title>
+  <title>Extracción de Audio y Transcripción con ffmpeg.wasm y Groq</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>Extraer Audio de Video a MP3</h1>
+  <h1>Extraer Audio de Video a MP3 y Transcribir</h1>
   
   <input type="file" id="uploader" accept="video/*">
   <br><br>
@@ -15,6 +15,8 @@
   <progress id="progressBar" value="0" max="100" style="width: 100%; display: none;"></progress>
   <br><br>
   <a id="downloadLink" href="#" download="audio.mp3" style="display: none;">Descargar MP3</a>
+  <br><br>
+  <div id="transcriptionResult" style="white-space: pre-wrap; text-align: left;"></div>
 
   <!-- Cargar las bibliotecas necesarias -->
   <script src="/js/ffmpeg.min.js"></script>
