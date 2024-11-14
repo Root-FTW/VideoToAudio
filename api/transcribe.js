@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
-      console.error('Error parsing form:', err);
+      console.error('Error al analizar el formulario:', err);
       return res.status(500).json({ error: 'Error procesando la solicitud' });
     }
 
@@ -36,7 +36,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'El archivo de audio excede el tamaño máximo permitido de 25 MB' });
     }
 
-    // Leer el archivo de audio
+    // Crear un stream del archivo
     const audioStream = fs.createReadStream(audioFile.path);
 
     try {
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-          // 'Content-Type' será manejado por FormData
+          // 'Content-Type' será manejado automáticamente por FormData
         },
         body: (() => {
           const FormData = require('form-data');
@@ -54,23 +54,24 @@ export default async function handler(req, res) {
             contentType: audioFile.type,
           });
           formData.append('model', 'whisper-large-v3');
-          formData.append('response_format', 'verbose_json');
+          // Puedes omitir 'response_format' si prefieres el formato por defecto
+          // formData.append('response_format', 'verbose_json');
           return formData;
         })(),
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Error de Groq API:', errorText);
+        console.error('Error en la API de Groq:', errorText);
         return res.status(500).json({ error: 'Error en la transcripción' });
       }
 
       const transcription = await response.json();
 
-      // Devuelve la transcripción al cliente
+      // Devuelve la transcripción al frontend
       return res.status(200).json({ transcription });
     } catch (error) {
-      console.error('Error en la transcripción:', error);
+      console.error('Error durante la transcripción:', error);
       return res.status(500).json({ error: 'Error interno en la transcripción' });
     } finally {
       // Limpiar el archivo temporal
