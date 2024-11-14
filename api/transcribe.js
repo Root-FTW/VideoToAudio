@@ -3,7 +3,9 @@
 const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch'); // Asegúrate de que es la versión 2
+
+const FormData = require('form-data');
 
 export const config = {
   api: {
@@ -40,23 +42,21 @@ export default async function handler(req, res) {
     const audioStream = fs.createReadStream(audioFile.path);
 
     try {
+      const formData = new FormData();
+      formData.append('file', audioStream, {
+        filename: path.basename(audioFile.path),
+        contentType: audioFile.type,
+      });
+      formData.append('model', 'whisper-large-v3');
+      formData.append('response_format', 'verbose_json'); // Opcional
+
       const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-          // 'Content-Type' será manejado automáticamente por FormData
+          ...formData.getHeaders(), // Añadir encabezados apropiados para multipart/form-data
         },
-        body: (() => {
-          const FormData = require('form-data');
-          const formData = new FormData();
-          formData.append('file', audioStream, {
-            filename: path.basename(audioFile.path),
-            contentType: audioFile.type,
-          });
-          formData.append('model', 'whisper-large-v3');
-          formData.append('response_format', 'verbose_json'); // Puedes omitir esto si prefieres el formato por defecto
-          return formData;
-        })(),
+        body: formData,
       });
 
       if (!response.ok) {
