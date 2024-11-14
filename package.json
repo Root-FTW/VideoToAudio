@@ -1,6 +1,7 @@
 {
   "name": "videotoaudio",
   "version": "1.0.0",
+  "type": "module",
   "main": "script.js",
   "dependencies": {
     "asap": "^2.0.6",
@@ -11,12 +12,11 @@
     "formidable": "^3.5.2",
     "hexoid": "^2.0.0",
     "node-domexception": "^1.0.0",
-    "node-fetch": "^3.3.2",
+    "node-fetch": "^2.7.0",
     "once": "^1.4.0",
     "web-streams-polyfill": "^3.3.3",
     "wrappy": "^1.0.2"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
